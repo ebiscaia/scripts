@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+diskOrig=/mnt/WDigital
+diskDest=/media/Daily
+err=0
+message="Subject: Backup failed\n\nThe backup on $(date +%d/%m/%y) failed due to the following issue(s):\n"
+# Mount all disks
+mount -a
+
+# Check if there is no issues with the disks
+#
+# # Check if diskOrigin is empty
+if [[ ! $(ls -A $diskOrig) ]]; then
+    message="$message\t- $diskOrig is empty.\n"
+    err=1
+fi
+
+# # Check if diskDest does not exist
+if [[ ! -d $diskDest ]]; then
+    message="$message\t- $diskDest was not found.\n"
+    err=1
+fi
+
+if [[ $err -eq 0 ]]; then
+   echo -e "\nStarting Dail y backup $(date +%d/%m/%y)" >> /var/log/rsync
+    rsync -aAXPvh --delete $diskOrig/ $diskDest/ >> /var/log/rsync 2>&1
+else
+    echo -e "$message" | msmtp -a iCloud ebiscaia@me.com
+fi
